@@ -31,8 +31,10 @@ public class Main {
 		MATCHING_COLUMN_INPUT1_VS_INPUT2.put("Depth", "Pressure, Digiquartz [db]");
 	}
 
+	private static String VERSION = "1.0.1";
+
 	public static void main(String[] args) {
-		System.out.println("Starting!");
+		System.out.println("Starting, Version " + VERSION);
 
 		if (args.length != 3) {
 			System.out.println("Wrong number of input arguments! You must insert 3 arguments. You insert " + args.length
