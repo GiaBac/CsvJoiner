@@ -74,8 +74,7 @@ public class Main {
 		String[] outputHeaders = calculateOutputHeaders(parsedFileInput1.getColumns(), parsedFileInput2.getColumns());
 
 		try {
-			writeMatchinRowOnCSVFile(matchingMap, outputHeaders, parsedFileInput2, allMatchingRowsInput2,
-					outputFileName);
+			createOutputFile(matchingMap, outputHeaders, parsedFileInput2, allMatchingRowsInput2, outputFileName);
 		} catch (IOException e) {
 			System.out
 					.println("Something goes wrong when write the output file: " + outputFileName + "\n Details:" + e);
@@ -84,7 +83,7 @@ public class Main {
 		System.out.println("Complete!");
 	}
 
-	private static void writeNotMAtchinRowOfInput2OnCSVOutputFile(CSVPrinter csvPrinter, ParsedFile parsedFileInput2,
+	private static void writeNotMatchinRowOfInput2OnCSVOutputFile(CSVPrinter csvPrinter, ParsedFile parsedFileInput2,
 			Set<CSVRecord> allMatchingRowsInput2, String[] outputHeaders) throws IOException {
 
 		List<CSVRecord> rowInput2NotMatched = new ArrayList<CSVRecord>();
@@ -131,11 +130,9 @@ public class Main {
 		return outputHeader.toArray(new String[] {});
 	}
 
-	private static void writeMatchinRowOnCSVFile(Map<CSVRecord, Set<CSVRecord>> matchingMap, String[] outputHeaders,
+	private static void createOutputFile(Map<CSVRecord, Set<CSVRecord>> matchingMap, String[] outputHeaders,
 			ParsedFile parsedFileInput2, Set<CSVRecord> allMatchingRowsInput2, String outputFileName)
 			throws IOException {
-
-		System.out.println("Writing on output file matching rows...");
 
 		BufferedWriter writer = null;
 		CSVPrinter csvPrinter = null;
@@ -143,15 +140,9 @@ public class Main {
 			writer = Files.newBufferedWriter(Paths.get(outputFileName));
 			csvPrinter = new CSVPrinter(writer, CSVFormat.EXCEL.withHeader(outputHeaders).withDelimiter(';'));
 
-			for (Entry<CSVRecord, Set<CSVRecord>> matchingEntry : matchingMap.entrySet()) {
-				Set<List<String>> outputRows = createOutputRows(matchingEntry, outputHeaders);
+			writeMatchinRowOnCSVOutputFile(outputFileName, outputHeaders, matchingMap, csvPrinter);
 
-				for (List<String> outputRow : outputRows) {
-					csvPrinter.printRecord(outputRow);
-				}
-			}
-
-			writeNotMAtchinRowOfInput2OnCSVOutputFile(csvPrinter, parsedFileInput2, allMatchingRowsInput2,
+			writeNotMatchinRowOfInput2OnCSVOutputFile(csvPrinter, parsedFileInput2, allMatchingRowsInput2,
 					outputHeaders);
 
 			csvPrinter.flush();
@@ -163,6 +154,19 @@ public class Main {
 		}
 
 		System.out.println("Writing on output file... Complete!");
+	}
+
+	private static void writeMatchinRowOnCSVOutputFile(String outputFileName, String[] outputHeaders,
+			Map<CSVRecord, Set<CSVRecord>> matchingMap, CSVPrinter csvPrinter) throws IOException {
+		System.out.println("Writing on output file matching rows...");
+
+		for (Entry<CSVRecord, Set<CSVRecord>> matchingEntry : matchingMap.entrySet()) {
+			Set<List<String>> outputRows = createOutputRows(matchingEntry, outputHeaders);
+
+			for (List<String> outputRow : outputRows) {
+				csvPrinter.printRecord(outputRow);
+			}
+		}
 	}
 
 	private static Set<List<String>> createOutputRows(Entry<CSVRecord, Set<CSVRecord>> matchingEntry,
