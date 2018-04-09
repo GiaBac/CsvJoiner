@@ -23,6 +23,7 @@ import org.apache.commons.csv.CSVRecord;
 
 public class Main {
 
+	private static final char DELIMITER = ';';
 	private static final String INPUT2_HEADER_PREFIX = "I2_";
 	private static final String INPUT1_HEADER_PREFIX = "I1_";
 	private static final Map<String, String> MATCHING_COLUMN_INPUT1_VS_INPUT2 = new HashMap<String, String>();
@@ -53,6 +54,7 @@ public class Main {
 		System.out.println("Input File 1: " + input1Path);
 		System.out.println("Input File 2: " + input2Path);
 		System.out.println("Output File: " + outputFileName);
+		System.out.println("Delimiter between column of csv file used: " + DELIMITER);
 		System.out.println("Matchin Criteria: " + MATCHING_COLUMN_INPUT1_VS_INPUT2);
 
 		final ParsedFile parsedFileInput1 = parseCSVFile(input1Path, MATCHING_COLUMN_INPUT1_VS_INPUT2.keySet());
@@ -243,7 +245,7 @@ public class Main {
 		final List<CSVRecord> records;
 		final Set<String> columns;
 		try {
-			CSVParser parser = CSVFormat.EXCEL.withFirstRecordAsHeader().withDelimiter(';').parse(inputReader);
+			CSVParser parser = CSVFormat.EXCEL.withFirstRecordAsHeader().withDelimiter(DELIMITER).parse(inputReader);
 			records = parser.getRecords();
 			columns = parser.getHeaderMap().keySet();
 		} catch (IOException e) {
