@@ -20,45 +20,41 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.csvjoiner.main.inputparam.InputParameters;
+import org.csvjoiner.main.inputparam.ParserException;
 
 public class Main {
 
-	private static final char DELIMITER = ';';
 	private static final String INPUT2_HEADER_PREFIX = "I2_";
 	private static final String INPUT1_HEADER_PREFIX = "I1_";
-	private static final Map<String, String> MATCHING_COLUMN_INPUT1_VS_INPUT2 = new HashMap<String, String>();
+	private static final Map<String, String> MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT = new HashMap<String, String>();
 	static {
-		MATCHING_COLUMN_INPUT1_VS_INPUT2.put("Station", "Station");
-		MATCHING_COLUMN_INPUT1_VS_INPUT2.put("Depth", "Pressure, Digiquartz [db]");
+		MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT.put("Station", "Station");
+		MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT.put("Depth", "Pressure, Digiquartz [db]");
 	}
 
-	private static String VERSION = "1.0.1";
-
 	public static void main(String[] args) {
-		System.out.println("Starting, Version " + VERSION);
+		System.out.println("Starting!");
+		InputParameters inputParams;
 
-		if (args.length != 3) {
-			System.out.println("Wrong number of input arguments! You must insert 3 arguments. You insert " + args.length
-					+ " instead.");
-			System.out.println("Sintax: java -jar csvJoiner.jar <inputFile1> <inputFile2> <outputFile>");
-			System.out.println(
-					"Sample of usage: java -jar csvJoiner.jar fileOriginaleComponenti4E5Prime90MatriciCSV.csv \"ESAW-1-2-d (originale con bottom depth).csv\" fullTestOutput.csv");
-
+		try {
+			inputParams = InputParameters.parseInputParam(args);
+		} catch (ParserException e1) {
 			stopProgram(1);
+			return;
 		}
 
-		final String input1Path = args[0];
-		final String input2Path = args[1];
-		final String outputFileName = args[2];
+		final String input1Path = inputParams.getInput1Path();
+		final String input2Path = inputParams.getInput2Path();
+		final String outputFileName = inputParams.getOutputFileName();
 
 		System.out.println("Input File 1: " + input1Path);
 		System.out.println("Input File 2: " + input2Path);
 		System.out.println("Output File: " + outputFileName);
-		System.out.println("Delimiter between column of csv file used: " + DELIMITER);
-		System.out.println("Matchin Criteria: " + MATCHING_COLUMN_INPUT1_VS_INPUT2);
+		System.out.println("Matchin Criteria: " + MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT);
 
-		final ParsedFile parsedFileInput1 = parseCSVFile(input1Path, MATCHING_COLUMN_INPUT1_VS_INPUT2.keySet());
-		final ParsedFile parsedFileInput2 = parseCSVFile(input2Path, MATCHING_COLUMN_INPUT1_VS_INPUT2.values());
+		final ParsedFile parsedFileInput1 = parseCSVFile(input1Path, MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT.keySet());
+		final ParsedFile parsedFileInput2 = parseCSVFile(input2Path, MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT.values());
 
 		Map<CSVRecord, Set<CSVRecord>> matchingMap = new HashMap<CSVRecord, Set<CSVRecord>>();
 		Set<CSVRecord> allMatchingRowsInput2 = new HashSet<CSVRecord>();
@@ -67,7 +63,7 @@ public class Main {
 			System.out.println("Matchin row #" + csvRecord.getRecordNumber() + " of file " + input1Path);
 
 			Set<CSVRecord> matchingRowsInput2AgainstOneRow = matchRow(csvRecord, parsedFileInput2.getRecords(),
-					MATCHING_COLUMN_INPUT1_VS_INPUT2);
+					MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT);
 
 			System.out.println("Found " + matchingRowsInput2AgainstOneRow.size() + " match");
 
@@ -78,7 +74,8 @@ public class Main {
 		String[] outputHeaders = calculateOutputHeaders(parsedFileInput1.getColumns(), parsedFileInput2.getColumns());
 
 		try {
-			createOutputFile(matchingMap, outputHeaders, parsedFileInput2, allMatchingRowsInput2, outputFileName);
+			writeMatchinRowOnCSVFile(matchingMap, outputHeaders, parsedFileInput2, allMatchingRowsInput2,
+					outputFileName);
 		} catch (IOException e) {
 			System.out
 					.println("Something goes wrong when write the output file: " + outputFileName + "\n Details:" + e);
@@ -87,7 +84,7 @@ public class Main {
 		System.out.println("Complete!");
 	}
 
-	private static void writeNotMatchinRowOfInput2OnCSVOutputFile(CSVPrinter csvPrinter, ParsedFile parsedFileInput2,
+	private static void writeNotMAtchinRowOfInput2OnCSVOutputFile(CSVPrinter csvPrinter, ParsedFile parsedFileInput2,
 			Set<CSVRecord> allMatchingRowsInput2, String[] outputHeaders) throws IOException {
 
 		List<CSVRecord> rowInput2NotMatched = new ArrayList<CSVRecord>();
@@ -134,9 +131,11 @@ public class Main {
 		return outputHeader.toArray(new String[] {});
 	}
 
-	private static void createOutputFile(Map<CSVRecord, Set<CSVRecord>> matchingMap, String[] outputHeaders,
+	private static void writeMatchinRowOnCSVFile(Map<CSVRecord, Set<CSVRecord>> matchingMap, String[] outputHeaders,
 			ParsedFile parsedFileInput2, Set<CSVRecord> allMatchingRowsInput2, String outputFileName)
 			throws IOException {
+
+		System.out.println("Writing on output file matching rows...");
 
 		BufferedWriter writer = null;
 		CSVPrinter csvPrinter = null;
@@ -144,9 +143,15 @@ public class Main {
 			writer = Files.newBufferedWriter(Paths.get(outputFileName));
 			csvPrinter = new CSVPrinter(writer, CSVFormat.EXCEL.withHeader(outputHeaders).withDelimiter(';'));
 
-			writeMatchinRowOnCSVOutputFile(outputFileName, outputHeaders, matchingMap, csvPrinter);
+			for (Entry<CSVRecord, Set<CSVRecord>> matchingEntry : matchingMap.entrySet()) {
+				Set<List<String>> outputRows = createOutputRows(matchingEntry, outputHeaders);
 
-			writeNotMatchinRowOfInput2OnCSVOutputFile(csvPrinter, parsedFileInput2, allMatchingRowsInput2,
+				for (List<String> outputRow : outputRows) {
+					csvPrinter.printRecord(outputRow);
+				}
+			}
+
+			writeNotMAtchinRowOfInput2OnCSVOutputFile(csvPrinter, parsedFileInput2, allMatchingRowsInput2,
 					outputHeaders);
 
 			csvPrinter.flush();
@@ -158,19 +163,6 @@ public class Main {
 		}
 
 		System.out.println("Writing on output file... Complete!");
-	}
-
-	private static void writeMatchinRowOnCSVOutputFile(String outputFileName, String[] outputHeaders,
-			Map<CSVRecord, Set<CSVRecord>> matchingMap, CSVPrinter csvPrinter) throws IOException {
-		System.out.println("Writing on output file matching rows...");
-
-		for (Entry<CSVRecord, Set<CSVRecord>> matchingEntry : matchingMap.entrySet()) {
-			Set<List<String>> outputRows = createOutputRows(matchingEntry, outputHeaders);
-
-			for (List<String> outputRow : outputRows) {
-				csvPrinter.printRecord(outputRow);
-			}
-		}
 	}
 
 	private static Set<List<String>> createOutputRows(Entry<CSVRecord, Set<CSVRecord>> matchingEntry,
@@ -245,7 +237,7 @@ public class Main {
 		final List<CSVRecord> records;
 		final Set<String> columns;
 		try {
-			CSVParser parser = CSVFormat.EXCEL.withFirstRecordAsHeader().withDelimiter(DELIMITER).parse(inputReader);
+			CSVParser parser = CSVFormat.EXCEL.withFirstRecordAsHeader().withDelimiter(';').parse(inputReader);
 			records = parser.getRecords();
 			columns = parser.getHeaderMap().keySet();
 		} catch (IOException e) {
