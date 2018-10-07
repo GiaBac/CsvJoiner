@@ -27,11 +27,6 @@ public class Main {
 
 	private static final String INPUT2_HEADER_PREFIX = "I2_";
 	private static final String INPUT1_HEADER_PREFIX = "I1_";
-	private static final Map<String, String> MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT = new HashMap<String, String>();
-	static {
-		MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT.put("Station", "Station");
-		MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT.put("Depth", "Pressure, Digiquartz [db]");
-	}
 
 	public static void main(String[] args) {
 		System.out.println("Starting!");
@@ -47,14 +42,15 @@ public class Main {
 		final String input1Path = inputParams.getInput1Path();
 		final String input2Path = inputParams.getInput2Path();
 		final String outputFileName = inputParams.getOutputFileName();
+		final Map<String, String> matchinCriteriaInput1VsInput2 = inputParams.getMatchinCriteriaInput1VsInput2();
 
 		System.out.println("Input File 1: " + input1Path);
 		System.out.println("Input File 2: " + input2Path);
 		System.out.println("Output File: " + outputFileName);
-		System.out.println("Matchin Criteria: " + MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT);
+		System.out.println("Matchin Criteria: " + matchinCriteriaInput1VsInput2);
 
-		final ParsedFile parsedFileInput1 = parseCSVFile(input1Path, MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT.keySet());
-		final ParsedFile parsedFileInput2 = parseCSVFile(input2Path, MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT.values());
+		final ParsedFile parsedFileInput1 = parseCSVFile(input1Path, matchinCriteriaInput1VsInput2.keySet());
+		final ParsedFile parsedFileInput2 = parseCSVFile(input2Path, matchinCriteriaInput1VsInput2.values());
 
 		Map<CSVRecord, Set<CSVRecord>> matchingMap = new HashMap<CSVRecord, Set<CSVRecord>>();
 		Set<CSVRecord> allMatchingRowsInput2 = new HashSet<CSVRecord>();
@@ -63,7 +59,7 @@ public class Main {
 			System.out.println("Matchin row #" + csvRecord.getRecordNumber() + " of file " + input1Path);
 
 			Set<CSVRecord> matchingRowsInput2AgainstOneRow = matchRow(csvRecord, parsedFileInput2.getRecords(),
-					MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT);
+					matchinCriteriaInput1VsInput2);
 
 			System.out.println("Found " + matchingRowsInput2AgainstOneRow.size() + " match");
 
