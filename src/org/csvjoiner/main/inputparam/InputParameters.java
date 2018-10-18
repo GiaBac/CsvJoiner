@@ -53,6 +53,8 @@ public class InputParameters {
 
 		Options options = new Options();
 		options.addOption("o", true, "the name of the file that will contains the result");
+		options.addOption("m", true,
+				"the matchin criteria. Use the json format. The sintax is the following: a json array where elements are json object");
 		try {
 
 			CommandLineParser parser = new DefaultParser();
