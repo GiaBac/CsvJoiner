@@ -1,5 +1,6 @@
 package org.csvjoiner.main.inputparam;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,8 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class InputParameters {
 
@@ -54,7 +57,10 @@ public class InputParameters {
 		Options options = new Options();
 		options.addOption("o", true, "the name of the file that will contains the result");
 		options.addOption("m", true,
-				"the matchin criteria. Use the json format. The sintax is the following: a json array where elements are json object");
+				"the matchin criteria. Use the json format, a sample:  {col1stFile:col2ndFile, anotherCol1stFile:anotherCol2ndFile}"
+						+ "in this way the algo matching the row that have: \n"
+						+ "column <col1stFile> (from 1st file) against <col2ndFile> (from second file) AND \n"
+						+ "column <anotherCol1stFile> against <anotherCol2ndFile>");
 		try {
 
 			CommandLineParser parser = new DefaultParser();
@@ -90,7 +96,16 @@ public class InputParameters {
 			return null;
 		}
 
-		return null;
+		ObjectMapper objectMapper = new ObjectMapper();
+		Map<String, String> matchinCriteriaMap;
+		try {
+			matchinCriteriaMap = objectMapper.readValue(inputMatchinCriteria, HashMap.class);
 
+			return matchinCriteriaMap;
+		} catch (IOException e) {
+			System.out.println("Error reading matching criteria: use the default one. " + e.getMessage());
+
+			return null;
+		}
 	}
 }
