@@ -57,7 +57,8 @@ public class InputParameters {
 		Options options = new Options();
 		options.addOption("o", true, "the name of the file that will contains the result");
 		options.addOption("m", true,
-				"the matchin criteria. Use the json format, a sample:  {col1stFile:col2ndFile, anotherCol1stFile:anotherCol2ndFile}"
+				"the matchin criteria. Use the json format, a sample:  {\\\"col1stFile\\\":\\\"col2ndFile\\\",\\\"anotherCol1stFile\\\":\\\"anotherCol2ndFile\\\"}\n"
+						+ "(the \\\" are to escape doble quote: pay attention to: 1) put it and 2) no space after the ',')\n"
 						+ "in this way the algo matching the row that have: \n"
 						+ "column <col1stFile> (from 1st file) against <col2ndFile> (from second file) AND \n"
 						+ "column <anotherCol1stFile> against <anotherCol2ndFile>");
