@@ -29,7 +29,7 @@ public class Main {
 	private static final String INPUT1_HEADER_PREFIX = "I1_";
 
 	public static void main(String[] args) {
-		System.out.println("Starting!\nVersion 1.2");
+		System.out.println("Starting!\nVersion 1.3");
 		InputParameters inputParams;
 
 		try {
