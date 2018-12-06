@@ -70,8 +70,8 @@ public class Main {
 		String[] outputHeaders = calculateOutputHeaders(parsedFileInput1.getColumns(), parsedFileInput2.getColumns());
 
 		try {
-			writeMatchinRowOnCSVFile(matchingMap, outputHeaders, parsedFileInput2, allMatchingRowsInput2,
-					outputFileName);
+			writeMatchinRowOnCSVFile(matchingMap, outputHeaders, parsedFileInput1, parsedFileInput2,
+					allMatchingRowsInput2, outputFileName);
 		} catch (IOException e) {
 			System.out
 					.println("Something goes wrong when write the output file: " + outputFileName + "\n Details:" + e);
@@ -80,12 +80,12 @@ public class Main {
 		System.out.println("Complete!");
 	}
 
-	private static void writeNotMAtchinRowOfInput2OnCSVOutputFile(CSVPrinter csvPrinter, ParsedFile parsedFileInput2,
-			Set<CSVRecord> allMatchingRowsInput2, String[] outputHeaders) throws IOException {
+	private static void writeNotMAtchinRowOfInputOnCSVOutputFile(CSVPrinter csvPrinter, ParsedFile parsedFileInput,
+			Set<CSVRecord> allMatchingRowsInput, String[] outputHeaders, String inputHeaderPrefix) throws IOException {
 
 		List<CSVRecord> rowInput2NotMatched = new ArrayList<CSVRecord>();
-		rowInput2NotMatched.addAll(parsedFileInput2.getRecords());
-		rowInput2NotMatched.removeAll(allMatchingRowsInput2);
+		rowInput2NotMatched.addAll(parsedFileInput.getRecords());
+		rowInput2NotMatched.removeAll(allMatchingRowsInput);
 
 		Set<ArrayList<String>> result = new HashSet<ArrayList<String>>();
 		for (CSVRecord csvRecord : rowInput2NotMatched) {
@@ -93,8 +93,8 @@ public class Main {
 			for (String header : outputHeaders) {
 				final String origHeader;
 				final String value;
-				if (header.startsWith(INPUT2_HEADER_PREFIX)) {
-					origHeader = header.substring(INPUT2_HEADER_PREFIX.length());
+				if (header.startsWith(inputHeaderPrefix)) {
+					origHeader = header.substring(inputHeaderPrefix.length());
 					value = csvRecord.get(origHeader);
 					oneRow.add(value);
 				} else {
@@ -104,8 +104,8 @@ public class Main {
 			result.add(oneRow);
 		}
 
-		System.out.println("Writing on output file non-matching row of file input2: there are " + result.size()
-				+ " non-matching row of file input2...");
+		System.out.println("Writing on output file non-matching row of file " + parsedFileInput.getFileName()
+				+ ": there are " + result.size() + " non-matching row...");
 
 		for (List<String> outputRow : result) {
 			csvPrinter.printRecord(outputRow);
@@ -128,8 +128,8 @@ public class Main {
 	}
 
 	private static void writeMatchinRowOnCSVFile(Map<CSVRecord, Set<CSVRecord>> matchingMap, String[] outputHeaders,
-			ParsedFile parsedFileInput2, Set<CSVRecord> allMatchingRowsInput2, String outputFileName)
-			throws IOException {
+			ParsedFile parsedFileInput1, ParsedFile parsedFileInput2, Set<CSVRecord> allMatchingRowsInput2,
+			String outputFileName) throws IOException {
 
 		System.out.println("Writing on output file matching rows...");
 
@@ -147,8 +147,11 @@ public class Main {
 				}
 			}
 
-			writeNotMAtchinRowOfInput2OnCSVOutputFile(csvPrinter, parsedFileInput2, allMatchingRowsInput2,
-					outputHeaders);
+			writeNotMAtchinRowOfInputOnCSVOutputFile(csvPrinter, parsedFileInput2, allMatchingRowsInput2, outputHeaders,
+					INPUT2_HEADER_PREFIX);
+			Set<CSVRecord> allMatchingRowsInput1 = extractMatchingRowOnlyInput1(matchingMap);
+			writeNotMAtchinRowOfInputOnCSVOutputFile(csvPrinter, parsedFileInput1, allMatchingRowsInput1, outputHeaders,
+					INPUT1_HEADER_PREFIX);
 
 			csvPrinter.flush();
 		} finally {
@@ -159,6 +162,19 @@ public class Main {
 		}
 
 		System.out.println("Writing on output file... Complete!");
+	}
+
+	private static Set<CSVRecord> extractMatchingRowOnlyInput1(Map<CSVRecord, Set<CSVRecord>> matchingMap) {
+		Set<CSVRecord> matchingRowInput1 = new HashSet<CSVRecord>();
+
+		for (CSVRecord csvRecordInput1 : matchingMap.keySet()) {
+			Set<CSVRecord> matchingRows = matchingMap.get(csvRecordInput1);
+			if (matchingRows != null && matchingRows.size() != 0) {
+				matchingRowInput1.add(csvRecordInput1);
+			}
+		}
+
+		return matchingRowInput1;
 	}
 
 	private static Set<List<String>> createOutputRows(Entry<CSVRecord, Set<CSVRecord>> matchingEntry,
@@ -244,7 +260,7 @@ public class Main {
 
 		checkMandatoryColumns(filePath, records, mandatoryColumns);
 
-		return new ParsedFile(records, columns);
+		return new ParsedFile(filePath, records, columns);
 	}
 
 	private static void checkMandatoryColumns(String filePath, List<CSVRecord> records,
