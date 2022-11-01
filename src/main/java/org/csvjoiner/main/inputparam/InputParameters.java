@@ -25,15 +25,19 @@ public class InputParameters {
 	private final String input2Path;
 	private final String outputFileName;
 	private Map<String, String> matchingCriteria;
+	private boolean isMostNearMatchingEnabled;
+	private String colNameMostNearMatchingEnabled;
 
 	public InputParameters(String inputPath1, String inputPath2, String outputFileName,
-			Map<String, String> matchingCriteria) {
+			Map<String, String> matchingCriteria, String colNameMostNearMatchingEnabled) {
 		this.input1Path = inputPath1;
 		this.input2Path = inputPath2;
+		this.colNameMostNearMatchingEnabled = colNameMostNearMatchingEnabled;
 
 		this.outputFileName = (outputFileName == null) ? "joined.csv" : outputFileName;
 		this.matchingCriteria = (matchingCriteria == null) ? MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT
 				: matchingCriteria;
+		this.isMostNearMatchingEnabled = (colNameMostNearMatchingEnabled == null) ? false : true;
 	}
 
 	public String getInput1Path() {
@@ -52,16 +56,26 @@ public class InputParameters {
 		return matchingCriteria;
 	}
 
+	public String colNameMostNearMatchingEnabled() {
+		return colNameMostNearMatchingEnabled;
+	}
+
+	public boolean isMostNearMatchingEnabled() {
+		return isMostNearMatchingEnabled;
+	}
+
 	public static InputParameters parseInputParam(String[] args) throws ParserException {
 
 		Options options = new Options();
 		options.addOption("o", true, "the name of the file that will contains the result");
 		options.addOption("m", true,
 				"the matchin criteria. Use the json format, a sample:  {\\\"col1stFile\\\":\\\"col2ndFile\\\",\\\"anotherCol1stFile\\\":\\\"anotherCol2ndFile\\\"}\n"
-						+ "(the \\\" are to escape doble quote: pay attention to: 1) put it and 2) no space after the ',')\n"
+						+ "(the \\\" are to escape double quote: pay attention to: 1) put it and 2) no space after the ',')\n"
 						+ "in this way the algo matching the row that have: \n"
 						+ "column <col1stFile> (from 1st file) against <col2ndFile> (from second file) AND \n"
 						+ "column <anotherCol1stFile> against <anotherCol2ndFile>");
+		options.addOption("a", true,
+				"the name of the column whenre enable most-near approximation for matching criteria (must be a numeric columns)");
 		try {
 
 			CommandLineParser parser = new DefaultParser();
@@ -82,8 +96,10 @@ public class InputParameters {
 			final String input2Path = cmd.getArgs()[1];
 			final String outputFileName = cmd.getOptionValue('o');
 			final Map<String, String> matchinCriteria = parseMatchinCriteria(cmd.getOptionValue('m'));
+			final String colNameMostNearMatchingEnabled = cmd.getOptionValue('a');
 
-			return new InputParameters(input1Path, input2Path, outputFileName, matchinCriteria);
+			return new InputParameters(input1Path, input2Path, outputFileName, matchinCriteria,
+					colNameMostNearMatchingEnabled);
 		} catch (ParseException e) {
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp("java -jar csvJoiner.jar <inputFile1> <inputFile2>", options);

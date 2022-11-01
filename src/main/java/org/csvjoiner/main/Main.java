@@ -22,6 +22,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.csvjoiner.main.inputparam.InputParameters;
 import org.csvjoiner.main.inputparam.ParserException;
+import org.csvjoiner.main.matching.MatchingHelper;
 
 public class Main {
 
@@ -43,11 +44,13 @@ public class Main {
 		final String input2Path = inputParams.getInput2Path();
 		final String outputFileName = inputParams.getOutputFileName();
 		final Map<String, String> matchinCriteriaInput1VsInput2 = inputParams.getMatchinCriteriaInput1VsInput2();
+		final boolean isMostNearMatchingEnabled = inputParams.isMostNearMatchingEnabled();
 
 		System.out.println("Input File 1: " + input1Path);
 		System.out.println("Input File 2: " + input2Path);
 		System.out.println("Output File: " + outputFileName);
 		System.out.println("Matchin Criteria: " + matchinCriteriaInput1VsInput2);
+		System.out.println("Is most-near matching enabled: " + isMostNearMatchingEnabled);
 
 		final ParsedFile parsedFileInput1 = parseCSVFile(input1Path, matchinCriteriaInput1VsInput2.keySet());
 		final ParsedFile parsedFileInput2 = parseCSVFile(input2Path, matchinCriteriaInput1VsInput2.values());
@@ -58,8 +61,14 @@ public class Main {
 		for (CSVRecord csvRecord : parsedFileInput1.getRecords()) {
 			System.out.println("Matchin row #" + csvRecord.getRecordNumber() + " of file " + input1Path);
 
-			Set<CSVRecord> matchingRowsInput2AgainstOneRow = matchRow(csvRecord, parsedFileInput2.getRecords(),
-					matchinCriteriaInput1VsInput2);
+			final Set<CSVRecord> matchingRowsInput2AgainstOneRow;
+			if (isMostNearMatchingEnabled) {
+				matchingRowsInput2AgainstOneRow = MatchingHelper.matchRow_MostNear(csvRecord,
+						parsedFileInput2.getRecords(), matchinCriteriaInput1VsInput2);
+			} else {
+				matchingRowsInput2AgainstOneRow = MatchingHelper.matchRow_Equals(csvRecord,
+						parsedFileInput2.getRecords(), matchinCriteriaInput1VsInput2);
+			}
 
 			System.out.println("Found " + matchingRowsInput2AgainstOneRow.size() + " match");
 
@@ -202,38 +211,6 @@ public class Main {
 			result.add(oneRow);
 		}
 		return result;
-	}
-
-	private static Set<CSVRecord> matchRow(CSVRecord csvRecordInput1, Iterable<CSVRecord> recordsFileInput2,
-			Map<String, String> matchingColumnInput1VsInput2) {
-
-		Set<CSVRecord> matchedRecords = new HashSet<CSVRecord>();
-
-		for (CSVRecord csvRecord2 : recordsFileInput2) {
-
-			boolean isMatch = isRecordMatch(csvRecordInput1, matchingColumnInput1VsInput2, csvRecord2);
-
-			if (isMatch) {
-				matchedRecords.add(csvRecord2);
-			}
-		}
-
-		return matchedRecords;
-	}
-
-	private static boolean isRecordMatch(CSVRecord csvRecordInput1, Map<String, String> matchingColumnInput1VsInput2,
-			CSVRecord csvRecordInput2) {
-		for (Entry<String, String> colToMatch : matchingColumnInput1VsInput2.entrySet()) {
-
-			String valueFromInput1 = csvRecordInput1.get(colToMatch.getKey());
-			String valueFromInput2 = csvRecordInput2.get(colToMatch.getValue());
-
-			if (valueFromInput1 == null || !valueFromInput1.equals(valueFromInput2)) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	private static ParsedFile parseCSVFile(final String filePath, Collection<String> mandatoryColumns) {
