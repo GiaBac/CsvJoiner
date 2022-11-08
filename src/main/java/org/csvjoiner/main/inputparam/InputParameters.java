@@ -26,13 +26,13 @@ public class InputParameters {
 	private final String outputFileName;
 	private Map<String, String> matchingCriteria;
 	private boolean isMostNearMatchingEnabled;
-	private String colNameMostNearMatchingEnabled;
+	private String input1ColNameMostNearMatching;
 
 	public InputParameters(String inputPath1, String inputPath2, String outputFileName,
 			Map<String, String> matchingCriteria, String colNameMostNearMatchingEnabled) {
 		this.input1Path = inputPath1;
 		this.input2Path = inputPath2;
-		this.colNameMostNearMatchingEnabled = colNameMostNearMatchingEnabled;
+		this.input1ColNameMostNearMatching = colNameMostNearMatchingEnabled;
 
 		this.outputFileName = (outputFileName == null) ? "joined.csv" : outputFileName;
 		this.matchingCriteria = (matchingCriteria == null) ? MATCHING_COLUMN_INPUT1_VS_INPUT2_DEFAULT
@@ -56,8 +56,8 @@ public class InputParameters {
 		return matchingCriteria;
 	}
 
-	public String colNameMostNearMatchingEnabled() {
-		return colNameMostNearMatchingEnabled;
+	public String getInput1ColNameMostNearMatching() {
+		return input1ColNameMostNearMatching;
 	}
 
 	public boolean isMostNearMatchingEnabled() {
@@ -75,7 +75,7 @@ public class InputParameters {
 						+ "column <col1stFile> (from 1st file) against <col2ndFile> (from second file) AND \n"
 						+ "column <anotherCol1stFile> against <anotherCol2ndFile>");
 		options.addOption("a", true,
-				"the name of the column whenre enable most-near approximation for matching criteria (must be a numeric columns)");
+				"the name of the column of the 1st file where enable most-near approximation for matching criteria (must be a numeric columns)");
 		try {
 
 			CommandLineParser parser = new DefaultParser();

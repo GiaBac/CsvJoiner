@@ -64,7 +64,8 @@ public class Main {
 			final Set<CSVRecord> matchingRowsInput2AgainstOneRow;
 			if (isMostNearMatchingEnabled) {
 				matchingRowsInput2AgainstOneRow = MatchingHelper.matchRow_MostNear(csvRecord,
-						parsedFileInput2.getRecords(), matchinCriteriaInput1VsInput2);
+						parsedFileInput2.getRecords(), matchinCriteriaInput1VsInput2,
+						inputParams.getInput1ColNameMostNearMatching());
 			} else {
 				matchingRowsInput2AgainstOneRow = MatchingHelper.matchRow_Equals(csvRecord,
 						parsedFileInput2.getRecords(), matchinCriteriaInput1VsInput2);

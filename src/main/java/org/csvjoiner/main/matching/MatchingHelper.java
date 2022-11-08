@@ -31,18 +31,25 @@ public class MatchingHelper {
 	}
 
 	public static Set<CSVRecord> matchRow_MostNear(CSVRecord csvRecordInput1, List<CSVRecord> recordsFileInput2,
-			Map<String, String> matchingColumnInput1VsInput2) {
-		Set<CSVRecord> matchedRecords = new HashSet<CSVRecord>();
+			Map<String, String> matchingColumnInput1VsInput2, String mostNearMatchCol) {
+		Set<CSVRecord> matchedRecords = new HashSet<CSVRecord>(1);
 
+		MostNearMatch mostNearMatch = null;
 		for (CSVRecord csvRecord2 : recordsFileInput2) {
-
 			Optional<MostNearMatch> match = isRecordMatchByMostNear(csvRecordInput1, matchingColumnInput1VsInput2,
-					csvRecord2);
+					csvRecord2, mostNearMatchCol);
 
 			if (match.isPresent()) {
-				if())
-				matchedRecords.add(csvRecord2);
+				MostNearMatch current = match.get();
+				if (mostNearMatch == null || current.getDistance() < mostNearMatch.getDistance()) {
+					mostNearMatch = current;
+				}
+
 			}
+		}
+
+		if (mostNearMatch != null) {
+			matchedRecords.add(mostNearMatch.getCsvRecord2());
 		}
 
 		return matchedRecords;
@@ -64,31 +71,35 @@ public class MatchingHelper {
 	}
 
 	private static Optional<MostNearMatch> isRecordMatchByMostNear(CSVRecord csvRecordInput1,
-			Map<String, String> matchingColumnInput1VsInput2, CSVRecord csvRecordInput2) {
+			Map<String, String> matchingColumnInput1VsInput2, CSVRecord csvRecordInput2, String mostNearMatchCol) {
 
 		MostNearMatch candidate = null;
 
 		for (Entry<String, String> colToMatch : matchingColumnInput1VsInput2.entrySet()) {
 
-			String valueFromInput1 = csvRecordInput1.get(colToMatch.getKey());
+			String input1ColToMatch = colToMatch.getKey();
+			String valueFromInput1 = csvRecordInput1.get(input1ColToMatch);
 			String valueFromInput2 = csvRecordInput2.get(colToMatch.getValue());
 
-			ParsePosition pos1 = new ParsePosition(0);
-			Number numberFromInput1 = NumberFormat.getInstance().parse(valueFromInput1, pos1);
-			ParsePosition pos2 = new ParsePosition(0);
-			Number numberFromInput2 = NumberFormat.getInstance().parse(valueFromInput2, pos2);
+			if (input1ColToMatch.equals(mostNearMatchCol)) {
+				String vfi1Clean = valueFromInput1.replaceAll(",", ".");
+				String vfi2Clean = valueFromInput2.replaceAll(",", ".");
 
-			if (valueFromInput1.length() == pos1.getIndex() && valueFromInput2.length() == pos2.getIndex()) {
-				Double distance = Math.abs(numberFromInput1.doubleValue() - numberFromInput2.doubleValue());
-				candidate = new MostNearMatch(csvRecordInput2, colToMatch.getValue(), distance);
-			}
+				if (vfi1Clean.isEmpty() || valueFromInput2.isEmpty()) {
+					return Optional.empty();
+				}
 
-			if (valueFromInput1 == null || !valueFromInput1.equals(valueFromInput2)) {
-				// If exact match fails, the row not match (regardless the most-near match)
+				double dvalInput1 = Double.parseDouble(vfi1Clean);
+				double dvalInput2 = Double.parseDouble(vfi2Clean);
+				Double distance = Math.abs(dvalInput1 - dvalInput2);
+				candidate = new MostNearMatch(csvRecordInput2, distance);
+
+			} else if (valueFromInput1 == null || !valueFromInput1.equals(valueFromInput2)) {
+				// If one exact match fails, the row not match (regardless the most-near match)
 				return Optional.empty();
 			}
 		}
 
-		return Optional.of(new MostNearMatch(csvRecordInput2));
+		return (candidate == null) ? Optional.empty() : Optional.of(candidate);
 	}
 }
